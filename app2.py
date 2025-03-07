@@ -87,18 +87,44 @@ if st.session_state.input_data_set:
     # Build the prompt for the LLM
     if not st.session_state.first_response:
         prompt = f"""
-        **Context:**
+**Context:**
 
-        - **Industry:** {st.session_state.input_data['industry']}
-        - **Products/Services:** {st.session_state.input_data['products']}
-        - **Location:** {st.session_state.input_data['location']}
-        - **Data Constraints:** {st.session_state.input_data['data']}
-        - **Timeframe:** {st.session_state.input_data['timeframe']}
+- **Industry:** {st.session_state.input_data['industry']}
+- **Products/Services:** {st.session_state.input_data['products']}
+- **Location:** {st.session_state.input_data['location']}
+- **Data:** {st.session_state.input_data['data']}
+- **Timeframe:** {st.session_state.input_data['timeframe']}
 
-        **Task:**
-        Act as an expert demand forecaster and supply chain strategist for the given industry. 
-        Create a detailed stock/resource list for the business operating in the specified location within the defined timeframe, considering the constraints of available data.
-        """
+**Task:**
+
+Act as an expert demand forecaster and supply chain strategist for the given industry. Create a detailed stock/resource list for the business operating in the specified location within the defined timeframe, considering the constraints of available data.
+
+**Instructions:**
+
+1. **Stock/Resource List:**
+   - Provide a detailed list with specific quantities for each primary category and its subcategories.
+   - Include total numbers and breakdowns.
+
+2. **Festival/Seasonal/Event Analysis:**
+   - Identify major festivals, seasons, or events within the timeframe.
+   - Analyze their impact on demand for each category and explain which items/services surge and why.
+
+3. **Market Trends:**
+   - Incorporate relevant market trends that influence consumer behavior in the specified industry and location.
+
+4. **Assumptions:**
+   - Clearly state all assumptions used in your forecast (e.g., estimated population, market penetration, etc.) with logical reasoning.
+
+5. **Stock/Resource Management Strategy:**
+   - Recommend an approach for stock/resource management given the lack of historical data.
+   - Include initial stock, restocking schedules (especially before festivals), and shelf-life management.
+
+**Output Format:**
+
+- Use markdown with headings, bullet points, and tables.
+- Provide numerical data for all items.
+- Include a summary table of the final stock/resource list.
+"""
         st.session_state.first_response = True
     else:
         prompt = f"""
