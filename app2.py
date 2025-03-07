@@ -4,7 +4,11 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 # Configure secrets and page settings
-GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+try:
+    GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+except KeyError:
+    st.error("GROQ API Key not found. Please add it to your Streamlit secrets.")
+
 st.set_page_config(page_title="Website Maker Chatbot", layout="wide")
 st.title("Website Maker Chatbot")
 
@@ -25,8 +29,8 @@ model_name = st.sidebar.selectbox(
     "Select Model", 
     ["llama-3.1-8b-instant", "gemini-2.0-pro-exp-02-05", "gemini-2.0-flash-thinking-exp-01-21"]
 )
-#demo chnsage
 
+# Initialize session state
 if "input_data" not in st.session_state:
     st.session_state.input_data = {
         "industry": "",
@@ -37,6 +41,15 @@ if "input_data" not in st.session_state:
     }
 if "input_data_set" not in st.session_state:
     st.session_state.input_data_set = False
+
+if "conversation_chain" not in st.session_state:
+    st.session_state.conversation_chain = None
+
+if "first_response" not in st.session_state:
+    st.session_state.first_response = False
+
+if "user_input" not in st.session_state:
+    st.session_state.user_input = ''
 
 # Initialize the chosen LLM
 if model_name == "llama-3.1-8b-instant":
@@ -56,86 +69,71 @@ if not st.session_state.input_data_set:
         st.session_state.input_data["timeframe"] = st.text_input("Enter the timeframe:")
 
         submit_button = st.form_submit_button(label="Submit")
-else: 
-    user_input =  st.chat_input("Type your response here")
 
-    
+        if submit_button:
+            if not all(st.session_state.input_data.values()):
+                st.warning("Please fill out all fields before submitting.")
+            else:
+                st.session_state.input_data_set = True
+                st.session_state.first_response = False
+else:
+    st.session_state.user_input = st.chat_input("Type your response here")
 
-
-if submit_button:
-    st.session_state.input_data_set = True
-    # Display input summary
+if st.session_state.input_data_set:
     st.subheader("Input Summary")
-    st.markdown(f"**Industry:** {industry}")
-    st.markdown(f"**Products/Services:** {products}")
-    st.markdown(f"**Location:** {location}")
-    st.markdown(f"**Data Constraints:** {data_constraints}")
-    st.markdown(f"**Timeframe:** {timeframe}")
+    for key, value in st.session_state.input_data.items():
+        st.markdown(f"**{key.capitalize().replace('_', ' ')}:** {value}")
 
     # Build the prompt for the LLM
-    prompt = f"""
-**Context:**
+    if not st.session_state.first_response:
+        prompt = f"""
+        **Context:**
 
-- **Industry:** {industry}
-- **Products/Services:** {products}
-- **Location:** {location}
-- **Data:** {data_constraints}
-- **Timeframe:** {timeframe}
+        - **Industry:** {st.session_state.input_data['industry']}
+        - **Products/Services:** {st.session_state.input_data['products']}
+        - **Location:** {st.session_state.input_data['location']}
+        - **Data Constraints:** {st.session_state.input_data['data']}
+        - **Timeframe:** {st.session_state.input_data['timeframe']}
 
-**Task:**
-
-Act as an expert demand forecaster and supply chain strategist for the given industry. Create a detailed stock/resource list for the business operating in the specified location within the defined timeframe, considering the constraints of available data.
-
-**Instructions:**
-
-1. **Stock/Resource List:**
-   - Provide a detailed list with specific quantities for each primary category and its subcategories.
-   - Include total numbers and breakdowns.
-
-2. **Festival/Seasonal/Event Analysis:**
-   - Identify major festivals, seasons, or events within the timeframe.
-   - Analyze their impact on demand for each category and explain which items/services surge and why.
-
-3. **Market Trends:**
-   - Incorporate relevant market trends that influence consumer behavior in the specified industry and location.
-
-4. **Assumptions:**
-   - Clearly state all assumptions used in your forecast (e.g., estimated population, market penetration, etc.) with logical reasoning.
-
-5. **Stock/Resource Management Strategy:**
-   - Recommend an approach for stock/resource management given the lack of historical data.
-   - Include initial stock, restocking schedules (especially before festivals), and shelf-life management.
-
-**Output Format:**
-
-- Use markdown with headings, bullet points, and tables.
-- Provide numerical data for all items.
-- Include a summary table of the final stock/resource list.
-"""
-    
-    
+        **Task:**
+        Act as an expert demand forecaster and supply chain strategist for the given industry. 
+        Create a detailed stock/resource list for the business operating in the specified location within the defined timeframe, considering the constraints of available data.
+        """
+        st.session_state.first_response = True
+    else:
+        prompt = f"""
+        Please modify only the following sections based on the new requirements:
+        - {st.session_state.user_input}
+        """
 
     prompt_template = ChatPromptTemplate.from_messages([
-        ("system", "You are an expert powered supply chain demand forecaster."),
+        ("system", "You are an expert-powered supply chain demand forecaster."),
         ("human", prompt)
     ])
 
     st.subheader("Generating Response...")
+    with st.spinner("Thinking..."):
+        try:
+            st.session_state.conversation_chain = prompt_template | llm
+            response = st.session_state.conversation_chain.invoke({"user_input": st.session_state.user_input})
 
-    try:
-        conversation_chain = prompt_template | llm
-
-        # Use invoke method to get the response from the LLM
-        response = conversation_chain.invoke({"user_input": prompt})
-
-        if isinstance(response, dict) and "text" in response:
-            assistant_response = response["text"]
-        elif response and hasattr(response, "content"):
-            assistant_response = response.content
-        else:
-            assistant_response = "Sorry, I couldn’t understand that."
-    except Exception as e:
-        assistant_response = f"An error occurred: {e}"
+            if isinstance(response, dict) and "text" in response:
+                assistant_response = response["text"]
+            elif response and hasattr(response, "content"):
+                assistant_response = response.content
+            else:
+                assistant_response = "Sorry, I couldn’t understand that."
+        except Exception as e:
+            assistant_response = f"An error occurred: {e}"
 
     st.subheader("Response")
     st.markdown(assistant_response)
+
+# Add a reset button
+if st.sidebar.button("Reset Chat"):
+    st.session_state.clear()
+    st.experimental_rerun()
+
+st.sidebar.info("Built with ❤️ using Streamlit and LangChain")
+
+# Let me know if you want to refine this or add new features! 🚀
