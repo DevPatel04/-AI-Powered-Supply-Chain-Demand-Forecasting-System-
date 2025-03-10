@@ -88,7 +88,7 @@ if not st.session_state.input_data_set:
 if st.session_state.input_data_set:
     st.session_state.user_input = st.chat_input("Type your response here")
 
-if st.session_state.input_data_set:
+if st.session_state.input_data_set and st.session_state.first_response:
     st.subheader("Input Summary")
     for key, value in st.session_state.input_data.items():
         st.markdown(f"**{key.capitalize().replace('_', ' ')}:** {value}")
