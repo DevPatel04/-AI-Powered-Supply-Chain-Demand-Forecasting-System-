@@ -85,8 +85,7 @@ if not st.session_state.input_data_set:
             else:
                 st.session_state.input_data_set = True
                 st.session_state.first_response = False
-
-else:
+if st.session_state.input_data_set:
     st.session_state.user_input = st.chat_input("Type your response here")
 
 if st.session_state.input_data_set:
@@ -95,92 +94,89 @@ if st.session_state.input_data_set:
         st.markdown(f"**{key.capitalize().replace('_', ' ')}:** {value}")
 
     # Build the prompt for the LLM
-    if not st.session_state.first_response:
+if not st.session_state.first_response:
         prompt = f"""
-**Context:**
+        **Context:**
 
-- **Industry:** {st.session_state.input_data['industry']}
-- **Products/Services:** {st.session_state.input_data['products']}
-- **Location:** {st.session_state.input_data['location']}
-- **Data:** {st.session_state.input_data['data']}
-- **Timeframe:** {st.session_state.input_data['timeframe']}
+        - **Industry:** {st.session_state.input_data['industry']}
+        - **Products/Services:** {st.session_state.input_data['products']}
+        - **Location:** {st.session_state.input_data['location']}
+        - **Data:** {st.session_state.input_data['data']}
+        - **Timeframe:** {st.session_state.input_data['timeframe']}
 
-**Task:**
+        **Task:**
 
-Act as an expert demand forecaster and supply chain strategist for the given industry. Create a detailed stock/resource list for the business operating in the specified location within the defined timeframe, considering the constraints of available data.
+        Act as an expert demand forecaster and supply chain strategist for the given industry. Create a detailed stock/resource list for the business operating in the specified location within the defined timeframe, considering the constraints of available data.
 
-**Instructions:**
+        **Instructions:**
 
-1. **Stock/Resource List:**
-   - Provide a detailed list with specific quantities for each primary category and its subcategories.
-   - Include total numbers and breakdowns.
-   - also add the recommendation for other then Context stock/resource management strategy.
+        1. **Stock/Resource List:**
+        - Provide a detailed list with specific quantities for each primary category and its subcategories.
+        - Include total numbers and breakdowns.
+        - also add the recommendation for other then Context stock/resource management strategy.
 
-2. **Festival/Seasonal/Event Analysis:**
-   - Identify major festivals, seasons, or events within the timeframe.
-   - Analyze their impact on demand for each category and explain which items/services surge and why.
+        2. **Festival/Seasonal/Event Analysis:**
+        - Identify major festivals, seasons, or events within the timeframe.
+        - Analyze their impact on demand for each category and explain which items/services surge and why.
 
-3. **Market Trends:**
-   - Incorporate relevant market trends that influence consumer behavior in the specified industry and location.
+        3. **Market Trends:**
+        - Incorporate relevant market trends that influence consumer behavior in the specified industry and location.
 
-4. **Assumptions:**
-   - Clearly state all assumptions used in your forecast (e.g., estimated population, market penetration, etc.) with logical reasoning.
+        4. **Assumptions:**
+        - Clearly state all assumptions used in your forecast (e.g., estimated population, market penetration, etc.) with logical reasoning.
 
-5. **Stock/Resource Management Strategy:**
-   - Recommend an approach for stock/resource management given the lack of historical data.
-   - Include initial stock, restocking schedules (especially before festivals), and shelf-life management.
+        5. **Stock/Resource Management Strategy:**
+        - Recommend an approach for stock/resource management given the lack of historical data.
+        - Include initial stock, restocking schedules (especially before festivals), and shelf-life management.
 
-**Output Format:**
+        **Output Format:**
 
-- Use markdown with headings, bullet points, and tables.
-- Provide numerical data for all items.
-- Include a summary table of the final stock/resource list.
-"""
+        - Use markdown with headings, bullet points, and tables.
+        - Provide numerical data for all items.
+        - Include a summary table of the final stock/resource list."""
         st.session_state.first_response = True
-    else:
-        prompt = f"""
+else:
+    prompt = f"""
         Please modify only the following sections based on the new requirements:
         - {st.session_state.user_input}
         """
 
-    prompt_template = ChatPromptTemplate.from_messages([
-        ("system", "You are an expert-powered supply chain demand forecaster."),
-        ("human", prompt)
-    ])
+prompt_template = ChatPromptTemplate.from_messages([
+    ("system", "You are an expert-powered supply chain demand forecaster."),
+    ("human", prompt)
+])
 
-    st.session_state.chat_history.append({
-            "role": "user",
-            "content": prompt
-        })
+st.session_state.chat_history.append({
+        "role": "user",
+        "content": prompt
+    })
+if st.session_state.input_data_set:
+    with st.chat_message("assistant"):
+        st.subheader("Generating Response...")
+        with st.spinner("Thinking..."):
+            try:
+                st.session_state.conversation_chain = prompt_template | llm
+                response = st.session_state.conversation_chain.invoke({"user_input": st.session_state.user_input})
 
-    st.subheader("Generating Response...")
-    with st.spinner("Thinking..."):
-        try:
-            st.session_state.conversation_chain = prompt_template | llm
-            response = st.session_state.conversation_chain.invoke({"user_input": st.session_state.user_input})
+                if isinstance(response, dict) and "text" in response:
+                    assistant_response = response["text"]
+                elif response and hasattr(response, "content"):
+                    assistant_response = response.content
+                else:
+                    assistant_response = "Sorry, I couldn’t understand that."
+            except Exception as e:
+                assistant_response = f"An error occurred: {e}"
 
-            if isinstance(response, dict) and "text" in response:
-                assistant_response = response["text"]
-            elif response and hasattr(response, "content"):
-                assistant_response = response.content
-            else:
-                assistant_response = "Sorry, I couldn’t understand that."
-        except Exception as e:
-            assistant_response = f"An error occurred: {e}"
+        st.subheader("Response")
+        st.markdown(assistant_response)
 
-    st.subheader("Response")
-    st.markdown(assistant_response)
-
-    st.session_state.chat_history.append({
-                "role": "assistant",
-                "content": assistant_response
-            })
+        st.session_state.chat_history.append({
+                    "role": "assistant",
+                    "content": assistant_response
+                })
 
 # Add a reset button
 if st.sidebar.button("Reset Chat"):
     st.session_state.clear()
     st.rerun()
 
-st.sidebar.info("Built with ❤️ using Streamlit and LangChain")
-
-# Let me know if you want to refine this or add new features! 🚀
