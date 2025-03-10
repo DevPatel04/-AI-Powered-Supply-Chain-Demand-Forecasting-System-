@@ -27,7 +27,7 @@ for i, step in enumerate(steps, start=1):
 
 model_name = st.sidebar.selectbox(
     "Select Model", 
-    ["llama-3.1-8b-instant", "gemini-2.0-pro-exp-02-05", "gemini-2.0-flash-thinking-exp-01-21"]
+    ["gemini-2.0-pro-exp-02-05", "gemini-2.0-flash-thinking-exp-01-21","llama-3.1-8b-instant"]
 )
 
 # Initialize session state
@@ -118,14 +118,8 @@ if not st.session_state.first_response:
         2. **Festival/Seasonal/Event Analysis:**
         - Identify major festivals, seasons, or events within the timeframe.
         - Analyze their impact on demand for each category and explain which items/services surge and why.
-
-        3. **Market Trends:**
-        - Incorporate relevant market trends that influence consumer behavior in the specified industry and location.
-
-        4. **Assumptions:**
-        - Clearly state all assumptions used in your forecast (e.g., estimated population, market penetration, etc.) with logical reasoning.
-
-        5. **Stock/Resource Management Strategy:**
+        
+        3. **Stock/Resource Management Strategy:**
         - Recommend an approach for stock/resource management given the lack of historical data.
         - Include initial stock, restocking schedules (especially before festivals), and shelf-life management.
 
