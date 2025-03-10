@@ -51,6 +51,9 @@ if "first_response" not in st.session_state:
 if "user_input" not in st.session_state:
     st.session_state.user_input = ''
 
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
 # Initialize the chosen LLM
 if model_name == "llama-3.1-8b-instant":
     llm = ChatGroq(model=model_name, temperature=0.5)
@@ -58,6 +61,12 @@ else:
     llm = ChatGoogleGenerativeAI(model=model_name, temperature=0.5)
 
 st.header("Input Details")
+
+
+for message in st.session_state.chat_history:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
 
 # Use a form to collect all inputs at once
 if not st.session_state.input_data_set:
@@ -76,6 +85,7 @@ if not st.session_state.input_data_set:
             else:
                 st.session_state.input_data_set = True
                 st.session_state.first_response = False
+
 else:
     st.session_state.user_input = st.chat_input("Type your response here")
 
@@ -104,6 +114,7 @@ Act as an expert demand forecaster and supply chain strategist for the given ind
 1. **Stock/Resource List:**
    - Provide a detailed list with specific quantities for each primary category and its subcategories.
    - Include total numbers and breakdowns.
+   - also add the recommendation for other then Context stock/resource management strategy.
 
 2. **Festival/Seasonal/Event Analysis:**
    - Identify major festivals, seasons, or events within the timeframe.
@@ -137,6 +148,11 @@ Act as an expert demand forecaster and supply chain strategist for the given ind
         ("human", prompt)
     ])
 
+    st.session_state.chat_history.append({
+            "role": "user",
+            "content": prompt
+        })
+
     st.subheader("Generating Response...")
     with st.spinner("Thinking..."):
         try:
@@ -155,10 +171,15 @@ Act as an expert demand forecaster and supply chain strategist for the given ind
     st.subheader("Response")
     st.markdown(assistant_response)
 
+    st.session_state.chat_history.append({
+                "role": "assistant",
+                "content": assistant_response
+            })
+
 # Add a reset button
 if st.sidebar.button("Reset Chat"):
     st.session_state.clear()
-    st.experimental_rerun()
+    st.rerun()
 
 st.sidebar.info("Built with ❤️ using Streamlit and LangChain")
 
