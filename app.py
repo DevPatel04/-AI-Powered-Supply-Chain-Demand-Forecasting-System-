@@ -1,3 +1,4 @@
+# Import all required libraries
 import streamlit as st
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
@@ -63,12 +64,13 @@ model_name = st.sidebar.selectbox(
 
 st.session_state.input_data["data"] = st.sidebar.selectbox("Do you have the last 3 months of data?", ["No", "Yes"])
 
+# Initialize LLM
 if model_name == "llama-3.1-8b-instant":
     llm = ChatGroq(model=model_name, temperature=0.5)
 else:
     llm = ChatGoogleGenerativeAI(model=model_name, temperature=0.5)
 
-# Collect input data
+# Collect all input data from user
 if not st.session_state.input_data_set:
     with st.form(key="input_form"):
         st.session_state.input_data["industry"] = st.text_input("Enter the industry:")
@@ -96,8 +98,8 @@ if not st.session_state.input_data_set:
             st.session_state.input_data_set = True
             st.success("Form submitted successfully!")
 
-# Generate prompt
 def generate_prompt(user_input):
+    """This function generate prompt according to data availability of user."""
     if not st.session_state.first_response:
         if st.session_state.input_data["data"] == "Yes":
             prompt = get_prompt_with_old_data(st.session_state.input_data)
@@ -123,11 +125,12 @@ def generate_prompt(user_input):
     ])
 
 def display_chat_history():
+    """This function display chat history"""
     for message in st.session_state.chat_history:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-# Handle chat
+# Get user input, get response form LLM and display to user 
 if st.session_state.input_data_set:
     st.session_state.user_input = st.chat_input("Type your response here")
     prompt_template = generate_prompt(st.session_state.user_input)
@@ -144,7 +147,7 @@ if st.session_state.input_data_set:
         st.markdown(assistant_response)
         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
 
-# Reset button
+# Reset button for clearing chat history in session state
 if st.sidebar.button("Reset Chat"):
     st.session_state.clear()
     st.rerun()
