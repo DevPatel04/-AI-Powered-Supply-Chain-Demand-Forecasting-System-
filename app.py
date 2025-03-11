@@ -5,83 +5,94 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from prompt import get_prompt, get_prompt_update
 
 # Configure page settings
-st.set_page_config(page_title="Website Maker Chatbot", layout="wide")
-st.title("Website Maker Chatbot")
+st.set_page_config(page_title="Supply Chain Demand Forecasting Chatbot", layout="wide")
+st.title("Supply Chain Demand Forecasting Chatbot")
 
-# Load API key
-def load_api_key():
-    try:
-        return st.secrets["GROQ_API_KEY"]
-    except KeyError:
-        st.error("GROQ API Key not found. Please add it to your Streamlit secrets.")
-        st.stop()
 
-GROQ_API_KEY = load_api_key()
+try:    
+    GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+except KeyError:
+    st.error("GROQ API Key not found. Please add it to your Streamlit secrets.")
+    st.stop()
 
 # Initialize session state
-def init_session_state():
-    default_values = {
-        "input_data": {"industry": "", "products": "", "location": "", "data": "", "timeframe": ""},
-        "input_data_set": False,
-        "conversation_chain": None,
-        "first_response": False,
-        "user_input": '',
-        "chat_history": []
+if "input_data" not in st.session_state:
+    st.session_state.input_data = {
+        "industry": "",
+        "products": "",
+        "location": "",
+        "data": "",
+        "timeframe": "",
+        "type_of_business": "",
+        "size_of_business": "",
     }
-    for key, value in default_values.items():
-        if key not in st.session_state:
-            st.session_state[key] = value
+if "input_data_set" not in st.session_state:
+    st.session_state.input_data_set = False
 
-init_session_state()
+if "conversation_chain" not in st.session_state:
+    st.session_state.conversation_chain = None
+
+if "first_response" not in st.session_state:
+    st.session_state.first_response = False
+
+if "user_input" not in st.session_state:
+    st.session_state.user_input = ''
+
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
 
 # Sidebar navigation and model selection
-def sidebar_navigation():
-    st.sidebar.header("Navigation & Settings")
-    steps = [
-        "Enter the industry:",
-        "Enter the products/services:",
-        "Enter the location:",
-        "Enter the data constraints:",
-        "Enter the timeframe:"
-    ]
+st.sidebar.header("Navigation & Settings")
+steps = """
+    1.  Enter the industry,
+    2.  Enter the products/services,
+    3.  Enter the location,
+    4.  Enter the data constraints,
+    5.  Enter the timeframe
+"""
 
-    st.sidebar.markdown("**Steps:**")
-    for i, step in enumerate(steps, start=1):
-        st.sidebar.markdown(f"{i}. {step}")
+st.sidebar.markdown("**Steps:**")
+st.sidebar.markdown(steps)
 
-    return st.sidebar.selectbox(
-        "Select Model", 
-        ["gemini-2.0-pro-exp-02-05", "gemini-2.0-flash-thinking-exp-01-21", "llama-3.1-8b-instant"]
-    )
+model_name = st.sidebar.selectbox(
+    "Select Model", 
+    ["gemini-2.0-pro-exp-02-05", "gemini-2.0-flash-thinking-exp-01-21", "llama-3.1-8b-instant"]
+)
 
-model_name = sidebar_navigation()
-
-# Initialize language model
-def initialize_llm(model_name):
-    return ChatGroq(model=model_name, temperature=0.5) if model_name == "llama-3.1-8b-instant" else ChatGoogleGenerativeAI(model=model_name, temperature=0.5)
-
-llm = initialize_llm(model_name)
+if model_name == "llama-3.1-8b-instant":
+    llm = ChatGroq(model=model_name, temperature=0.5)
+else:
+    llm = ChatGoogleGenerativeAI(model=model_name, temperature=0.5)
 
 # Collect input data
-def collect_input():
-    if not st.session_state.input_data_set:
-        with st.form(key="input_form"):
-            for field in st.session_state.input_data:
-                st.session_state.input_data[field] = st.text_input(f"Enter the {field.replace('_', ' ')}:")
-            submit_button = st.form_submit_button(label="Submit")
-            if submit_button and all(st.session_state.input_data.values()):
-                st.session_state.input_data_set = True
-                st.session_state.first_response = False
-            elif submit_button:
-                st.warning("Please fill out all fields before submitting.")
+if not st.session_state.input_data_set:
+    with st.form(key="input_form"):
+        st.session_state.input_data["industry"] = st.text_input("Enter the industry:")
+        st.session_state.input_data["products"] = st.text_input("Enter the products/services:")
+        st.session_state.input_data["location"] = st.text_input("Enter the location:")
+        st.session_state.input_data["data"] = st.selectbox("Do you have the last 3 months of data?", ["No", "Yes"])
+        if st.session_state.input_data["data"] == "Yes":
+            st.session_state.input_data["data"] = st.file_uploader("Upload the data:", type="csv,excel")
+        st.session_state.input_data["timeframe"] = st.text_input("Enter the timeframe:")
+        st.session_state.input_data["type_of_business"] = st.selectbox("Enter the type of business:", ["Retail", "Manufacturing", "Wholesale", "Other"])
+        st.session_state.input_data["size_of_business"] = st.selectbox("Enter the size of business:", ["Small", "Medium", "Large", "Extra Large"])
 
-collect_input()
+        submit_button = st.form_submit_button(label="Submit")
+
+        if submit_button and all(st.session_state.input_data.values()):
+            st.session_state.input_data_set = True
+            st.session_state.first_response = False
+        elif submit_button:
+            st.warning("Please fill out all fields before submitting.")
 
 # Generate prompt
 def generate_prompt(user_input):
     if not st.session_state.first_response:
         prompt = get_prompt(st.session_state.input_data)
         st.session_state.first_response = True
+    elif st.session_state.input_data["data"] == "Yes":
+        pass
     else:
         prompt = get_prompt_update(st.session_state.input_data, user_input)
 
@@ -90,6 +101,13 @@ def generate_prompt(user_input):
         ("human",prompt)
     ])
 
+def display_chat_history():
+    for message in st.session_state.chat_history:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+if st.session_state.chat_history:
+    display_chat_history()
 
 # Handle chat
 if st.session_state.input_data_set:
@@ -112,14 +130,3 @@ if st.session_state.input_data_set:
 if st.sidebar.button("Reset Chat"):
     st.session_state.clear()
     st.rerun()
-
-# Display chat history
-def display_chat_history():
-    for message in st.session_state.chat_history:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-if st.session_state.chat_history:
-    display_chat_history()
-
-# This structure makes your app more modular and easier to extend! 🚀
