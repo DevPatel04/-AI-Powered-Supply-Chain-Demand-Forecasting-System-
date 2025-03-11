@@ -8,7 +8,6 @@ from prompt import get_prompt, get_prompt_update
 st.set_page_config(page_title="Supply Chain Demand Forecasting Chatbot", layout="wide")
 st.title("Supply Chain Demand Forecasting Chatbot")
 
-
 try:    
     GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 except KeyError:
@@ -98,11 +97,12 @@ def generate_prompt(user_input):
     elif st.session_state.input_data["data"] == "Yes":
         pass
     else:
-        prompt = get_prompt_update(st.session_state.input_data, user_input)
+        prompt = get_prompt(st.session_state.input_data)
+        # prompt = get_prompt_update(st.session_state.input_data, user_input)
         st.session_state.chat_history.append({"role": "user", "content": user_input})
 
     return ChatPromptTemplate.from_messages([
-        ("system", "You are an expert-powered supply chain demand forecaster."),
+        ("system", "You are an expert supply chain demand forecaster."),
         ("human",prompt)
     ])
 
@@ -124,7 +124,6 @@ if st.session_state.input_data_set:
             assistant_response = response.get("text") if isinstance(response, dict) else getattr(response, "content", "Sorry, I couldn’t understand that.")
         except Exception as e:
             assistant_response = f"An error occurred: {e}"
-
         st.subheader("Response")
         st.markdown(assistant_response)
         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
