@@ -118,10 +118,6 @@ if not st.session_state.first_response:
         2. **Festival/Seasonal/Event Analysis:**
         - Identify major festivals, seasons, or events within the timeframe.
         - Analyze their impact on demand for each category and explain which items/services surge and why.
-        
-        3. **Stock/Resource Management Strategy:**
-        - Recommend an approach for stock/resource management given the lack of historical data.
-        - Include initial stock, restocking schedules (especially before festivals), and shelf-life management.
 
         **Output Format:**
 
@@ -131,9 +127,43 @@ if not st.session_state.first_response:
         st.session_state.first_response = True
 else:
     prompt = f"""
+
+    **Context:**
+
+        - **Industry:** {st.session_state.input_data['industry']}
+        - **Products/Services:** {st.session_state.input_data['products']}
+        - **Location:** {st.session_state.input_data['location']}
+        - **Data:** {st.session_state.input_data['data']}
+        - **Timeframe:** {st.session_state.input_data['timeframe']}
+
+        **Task:**
+
+        Act as an expert demand forecaster and supply chain strategist for the given industry. Update a detailed stock/resource list for the business operating in the specified location within the defined timeframe, considering the constraints of available data.
+
+        **Instructions:**
+
+        1. **Stock/Resource List:**
+        - Provide a detailed list with specific quantities for each primary category and its subcategories.
+        - Include total numbers and breakdowns.
+        - also add the recommendation for other then Context stock/resource management strategy.
+
+        2. **Festival/Seasonal/Event Analysis:**
+        - Identify major festivals, seasons, or events within the timeframe.
+        - Analyze their impact on demand for each category and explain which items/services surge and why.
+        
+
+        **Output Format:**
+
+        - Use markdown with headings, bullet points, and tables.
+        - Provide numerical data for all items.
+        - Include a summary table of the final stock/resource list.
+
+        **Instructions:**
+
         Please modify only the following sections based on the new requirements:
+
         - {st.session_state.user_input}
-        """
+    """
 
 prompt_template = ChatPromptTemplate.from_messages([
     ("system", "You are an expert-powered supply chain demand forecaster."),
