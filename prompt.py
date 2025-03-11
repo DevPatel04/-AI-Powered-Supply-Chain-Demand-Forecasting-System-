@@ -11,7 +11,7 @@ def get_prompt(context):
 
     **Task:**
     You are an expert demand forecaster and supply chain strategist for the given industry. 
-    Forecast demand and create a detailed stock list for the business operating in the specified location within the defined timeframe, considering the all the festivals during that time, weather condition and social trend.
+    Forecast demand and create a detailed stock list for the business operating in the specified location within the defined timeframe, considering all the festivals during that time, weather conditions, and social trends.
 
     **Instructions:**
     1. **Stock/Resource List:**
@@ -22,9 +22,9 @@ def get_prompt(context):
     - Identify major festivals, seasons, or events within the timeframe.
     - Analyze their impact on demand for each category and explain which items/services surge and why.
 
-    3. **Transportation and delivery time:**
+    3. **Transportation and Delivery Time:**
     - Give each mode of transportation with expected delivery time.
-    - Identify best mode of transportation, considering cost and time.
+    - Identify the best mode of transportation, considering cost and time.
 
     4. Also add the recommendation for other than Context stock/resource management strategy.
 
@@ -34,8 +34,6 @@ def get_prompt(context):
     - Include a summary table of the final stock list.
     """
 
-    # **Avoid**
-    # - If user ask about out of knowledge, then do not give response.
 
 def get_prompt_update(context, user_input):
     return f"""
@@ -72,19 +70,19 @@ def get_prompt_update(context, user_input):
     **Instructions:**
 
     Please modify only the following sections based on the new requirements:
-    - {user_input}
+    - {{ {user_input} }}
     """
 
 
 def get_prompt_with_old_data(context):
-        return f"""
+    return f"""
     **Context:**
 
-    - **Industry:** {context['industry']}
-    - **last Products/Service sales report data :** {context['old_data']}
-    - **Location:** {context['location']}
-    - **Data:** {context['data']}
-    - **Timeframe:** {context['timeframe']}
+    - **Industry:** {{context['industry']}}
+    - **Last Products/Service Sales Report Data:** {{context['old_data']}}
+    - **Location:** {{context['location']}}
+    - **Data:** {{context['data']}}
+    - **Timeframe:** {{context['timeframe']}}
 
     **Task:**
 
@@ -107,3 +105,5 @@ def get_prompt_with_old_data(context):
     - Provide numerical data for all items.
     - Include a summary table of the final stock/resource list.
     """
+
+

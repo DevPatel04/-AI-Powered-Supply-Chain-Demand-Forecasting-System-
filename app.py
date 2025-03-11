@@ -69,7 +69,6 @@ else:
     llm = ChatGoogleGenerativeAI(model=model_name, temperature=0.5)
 
 # Collect input data
-
 if not st.session_state.input_data_set:
     with st.form(key="input_form"):
         st.session_state.input_data["industry"] = st.text_input("Enter the industry:")
@@ -114,8 +113,8 @@ def generate_prompt(user_input):
 
         st.session_state.chat_history.append({"role": "user", "content": first_data})
     else:
-        prompt = get_prompt(st.session_state.input_data)
-        # prompt = get_prompt_update(st.session_state.input_data, user_input)
+        # prompt = get_prompt(st.session_state.input_data)
+        prompt = get_prompt_update(st.session_state.input_data, user_input)
         st.session_state.chat_history.append({"role": "user", "content": user_input})
 
     return ChatPromptTemplate.from_messages([
