@@ -59,13 +59,13 @@ st.sidebar.markdown(steps)
 
 model_name = st.sidebar.selectbox(
     "Select Model", 
-    ["gemini-2.0-pro-exp-02-05", "gemini-2.0-flash-thinking-exp-01-21", "llama-3.1-8b-instant"]
+    ["gemini-2.0-pro-exp-02-05", "gemini-2.0-flash-thinking-exp-01-21", "llama3-70b-8192"]
 )
 
 st.session_state.input_data["data"] = st.sidebar.selectbox("Do you have the last 3 months of data?", ["No", "Yes"])
 
 # Initialize LLM
-if model_name == "llama-3.1-8b-instant":
+if model_name == "llama3-70b-8192":
     llm = ChatGroq(model=model_name, temperature=0.5)
 else:
     llm = ChatGoogleGenerativeAI(model=model_name, temperature=0.5)

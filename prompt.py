@@ -45,6 +45,9 @@ def get_prompt_update(context, user_input):
     - **Location:** {context['location']}
     - **Data:** {context['data']}
     - **Timeframe:** {context['timeframe']}
+    - **Type of Business:** {context['type_of_business']}
+    - **Size of Business:** {context['size_of_business']}
+
 
     **Task:**
     Act as an expert demand forecaster and supply chain strategist for the given industry. Update a detailed stock/resource list for the business operating in the specified location within the defined timeframe, considering the constraints of available data.
@@ -74,11 +77,13 @@ def get_prompt_with_old_data(context):
     """This function returns prompt when user upload previous sales data file"""
     return f"""
     **Context:**
-    - **Industry:** {{context['industry']}}
-    - **Last Products/Service Sales Report Data:** {{context['old_data']}}
-    - **Location:** {{context['location']}}
-    - **Data:** {{context['data']}}
-    - **Timeframe:** {{context['timeframe']}}
+    - **Industry:** {context['industry']}
+    - **Last Products/Service Sales Report Data:** {context['old_data']}
+    - **Location:** {context['location']}
+    - **Data:** {context['data']}
+    - **Timeframe:** {context['timeframe']}
+    - **Type of Business:** {context['type_of_business']}
+    - **Size of Business:** {context['size_of_business']}
 
     **Task:**
     Act as an expert demand forecaster and supply chain strategist for the given industry. Create a detailed stock/resource list for the business operating in the specified location within the defined timeframe, considering the constraints of available data.

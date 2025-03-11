@@ -1,1 +1,0 @@
-Chocolates, Gift Items, Sweets
