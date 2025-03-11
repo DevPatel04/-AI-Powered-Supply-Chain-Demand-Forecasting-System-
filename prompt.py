@@ -65,6 +65,5 @@ def get_prompt_update(context, user_input):
     **Instructions:**
 
     Please modify only the following sections based on the new requirements:
-
     - {user_input}
-    
+    """

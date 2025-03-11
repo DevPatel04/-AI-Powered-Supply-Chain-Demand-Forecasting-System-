@@ -81,6 +81,7 @@ collect_input()
 def generate_prompt(user_input):
     if not st.session_state.first_response:
         prompt = get_prompt(st.session_state.input_data)
+        st.session_state.first_response = True
     else:
         prompt = get_prompt_update(st.session_state.input_data, user_input)
 
@@ -89,25 +90,23 @@ def generate_prompt(user_input):
         ("human",prompt)
     ])
 
+
 # Handle chat
 if st.session_state.input_data_set:
     st.session_state.user_input = st.chat_input("Type your response here")
     prompt_template = generate_prompt(st.session_state.user_input)
-    st.session_state.chat_history.append({"role": "user", "content": prompt_template})
+    st.session_state.chat_history.append({"role": "user", "content": st.session_state.user_input})
+    with st.spinner("Thinking..."):
+        try:
+            st.session_state.conversation_chain = prompt_template | llm
+            response = st.session_state.conversation_chain.invoke({"user_input": st.session_state.user_input})
+            assistant_response = response.get("text") if isinstance(response, dict) else getattr(response, "content", "Sorry, I couldn’t understand that.")
+        except Exception as e:
+            assistant_response = f"An error occurred: {e}"
 
-    with st.chat_message("assistant"):
-        st.subheader("Generating Response...")
-        with st.spinner("Thinking..."):
-            try:
-                st.session_state.conversation_chain = prompt_template | llm
-                response = st.session_state.conversation_chain.invoke({"user_input": st.session_state.user_input})
-                assistant_response = response.get("text") if isinstance(response, dict) else getattr(response, "content", "Sorry, I couldn’t understand that.")
-            except Exception as e:
-                assistant_response = f"An error occurred: {e}"
-
-            st.subheader("Response")
-            st.markdown(assistant_response)
-            st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+        st.subheader("Response")
+        st.markdown(assistant_response)
+        st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
 
 # Reset button
 if st.sidebar.button("Reset Chat"):
