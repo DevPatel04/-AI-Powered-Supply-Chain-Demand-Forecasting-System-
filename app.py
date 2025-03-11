@@ -90,8 +90,12 @@ if not st.session_state.input_data_set:
 def generate_prompt(user_input):
     if not st.session_state.first_response:
         prompt = get_prompt(st.session_state.input_data)
-        st.session_state.first_response = True
-    elif st.session_state.input_data["data"] == "Yes":
+        st.session_state.chat_history.append({"role": "user", "content": st.session_state.input_data})
+    else:
+        prompt = get_prompt_update(st.session_state.input_data, user_input)
+        st.session_state.chat_history.append({"role": "user", "content": user_input})
+
+    if st.session_state.input_data["data"] == "Yes":
         pass
     else:
         prompt = get_prompt_update(st.session_state.input_data, user_input)
@@ -110,10 +114,8 @@ def display_chat_history():
 if st.session_state.input_data_set:
     st.session_state.user_input = st.chat_input("Type your response here")
     prompt_template = generate_prompt(st.session_state.user_input)
-    st.session_state.chat_history.append({"role": "user", "content": st.session_state.user_input})
     if st.session_state.chat_history:
         display_chat_history()
-if st.session_state.user_input:
     with st.spinner("Thinking..."):
         try:
             st.session_state.conversation_chain = prompt_template | llm
