@@ -67,10 +67,11 @@ else:
     llm = ChatGoogleGenerativeAI(model=model_name, temperature=0.5)
 
 # Collect input data
+
 if not st.session_state.input_data_set:
-    with st.form(key="input_form",):
+    with st.form(key="input_form"):
         st.session_state.input_data["industry"] = st.text_input("Enter the industry:")
-        st.session_state.input_data["data"] = st.selectbox("Do you have the last 3 months of data?", ["No", "Yes"])
+        st.session_state.input_data["data"] = st.selectbox("Do you have historical sales data?", options=["No", "Yes"])
         if st.session_state.input_data["data"] == "Yes":
             csv_path = st.file_uploader("Upload the data:", type="csv,excel")
             st.session_state.input_data["old_data"] = get_sales_report(csv_path)
