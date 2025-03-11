@@ -106,14 +106,14 @@ def display_chat_history():
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-if st.session_state.chat_history:
-    display_chat_history()
-
 # Handle chat
 if st.session_state.input_data_set:
     st.session_state.user_input = st.chat_input("Type your response here")
     prompt_template = generate_prompt(st.session_state.user_input)
     st.session_state.chat_history.append({"role": "user", "content": st.session_state.user_input})
+    if st.session_state.chat_history:
+        display_chat_history()
+if st.session_state.user_input:
     with st.spinner("Thinking..."):
         try:
             st.session_state.conversation_chain = prompt_template | llm
