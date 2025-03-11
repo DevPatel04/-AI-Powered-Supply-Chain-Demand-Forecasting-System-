@@ -61,6 +61,8 @@ model_name = st.sidebar.selectbox(
     ["gemini-2.0-pro-exp-02-05", "gemini-2.0-flash-thinking-exp-01-21", "llama-3.1-8b-instant"]
 )
 
+st.session_state.input_data["data"] = st.sidebar.selectbox("Do you have the last 3 months of data?", ["No", "Yes"])
+
 if model_name == "llama-3.1-8b-instant":
     llm = ChatGroq(model=model_name, temperature=0.5)
 else:
@@ -71,41 +73,45 @@ else:
 if not st.session_state.input_data_set:
     with st.form(key="input_form"):
         st.session_state.input_data["industry"] = st.text_input("Enter the industry:")
-        st.session_state.input_data["data"] = st.selectbox("Do you have historical sales data?", options=["No", "Yes"])
         if st.session_state.input_data["data"] == "Yes":
-            csv_path = st.file_uploader("Upload the data:", type="csv,excel")
+            csv_path = st.file_uploader("Upload a CSV file", type="csv")
             st.session_state.input_data["old_data"] = get_sales_report(csv_path)
+            st.session_state.input_data['products'] = " "
         else:
-            st.session_state.input_data["products"] = st.text_input("Enter the products/services:")
+            st.session_state.input_data["products"] = st.text_input("Enter the Products")
         st.session_state.input_data["location"] = st.text_input("Enter the location:")
         st.session_state.input_data["timeframe"] = st.text_input("Enter the timeframe:")
         st.session_state.input_data["type_of_business"] = st.selectbox("Enter the type of business:", ["Retail", "Manufacturing", "Wholesale", "Other"])
         st.session_state.input_data["size_of_business"] = st.selectbox("Enter the size of business:", ["Small", "Medium", "Large", "Extra Large"])
-
+        
         submit_button = st.form_submit_button(label="Submit")
-
-        if submit_button and all(st.session_state.input_data.values()):
+    
+    if submit_button:
+        missing_fields = [key for key, value in st.session_state.input_data.items() if not value and key != "old_data"]
+        
+        if st.session_state.input_data["data"] == "Yes" and not csv_path:
+            st.warning("Please upload a CSV file as you selected 'Yes' for historical data.")
+        elif missing_fields:
+            st.warning(f"Please fill out all fields before submitting: {', '.join(missing_fields).replace('_', ' ').title()}")
+        else:
             st.session_state.input_data_set = True
-            st.session_state.first_response = False
-        elif submit_button:
-            st.warning("Please fill out all fields before submitting.")
+            st.success("Form submitted successfully!")
 
 # Generate prompt
 def generate_prompt(user_input):
     if not st.session_state.first_response:
-        prompt = get_prompt(st.session_state.input_data)
-        st.session_state.first_response = True
-        first_data = ""
+        if st.session_state.input_data["data"] == "Yes":
+            prompt = get_prompt_with_old_data(st.session_state.input_data)
+            st.session_state.first_response = True
+            first_data = ""
+        else:
+            prompt = get_prompt(st.session_state.input_data)
+            st.session_state.first_response = True
+            first_data = ""
+            
         for key, value in st.session_state.input_data.items():
             first_data = first_data+f"{key}: {value}\n"
-        st.session_state.chat_history.append({"role": "user", "content": first_data})
-    elif st.session_state.input_data["data"] == "Yes":
-        prompt = get_prompt_with_old_data(st.session_state.input_data)
-        st.session_state.first_response = True
-        first_data = ""
-        for key, value in st.session_state.input_data.items():
-            if key != "old_data":
-                first_data = first_data+f"{key}: {value} \n\n"
+
         st.session_state.chat_history.append({"role": "user", "content": first_data})
     else:
         prompt = get_prompt(st.session_state.input_data)
