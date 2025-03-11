@@ -99,26 +99,18 @@ if not st.session_state.input_data_set:
 # Generate prompt
 def generate_prompt(user_input):
     if not st.session_state.first_response:
-
-        prompt = get_prompt(st.session_state.input_data)
-        st.session_state.first_response = True
-        first_data = ""
-
+        if st.session_state.input_data["data"] == "Yes":
+            prompt = get_prompt_with_old_data(st.session_state.input_data)
+            st.session_state.first_response = True
+            first_data = ""
+        else:
+            prompt = get_prompt(st.session_state.input_data)
+            st.session_state.first_response = True
+            first_data = ""
+            
         for key, value in st.session_state.input_data.items():
             first_data = first_data+f"{key}: {value}\n"
 
-        st.session_state.chat_history.append({"role": "user", "content": first_data})
-
-    if st.session_state.input_data["data"] == "Yes":
-        print("data")
-        prompt = get_prompt_with_old_data(st.session_state.input_data)
-        st.session_state.first_response = True
-        first_data = ""
-        
-        for key, value in st.session_state.input_data.items():
-            if key != "old_data":
-                first_data = first_data+f"{key}: {value} \n\n"
-                
         st.session_state.chat_history.append({"role": "user", "content": first_data})
     else:
         prompt = get_prompt(st.session_state.input_data)
