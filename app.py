@@ -2,7 +2,8 @@ import streamlit as st
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
-from prompt import get_prompt, get_prompt_update
+from prompt import get_prompt, get_prompt_update , get_prompt_with_old_data
+from agent import get_sales_report
 
 # Configure page settings
 st.set_page_config(page_title="Supply Chain Demand Forecasting Chatbot", layout="wide")
@@ -25,7 +26,8 @@ if "input_data" not in st.session_state:
         "timeframe": "",
         "type_of_business": "",
         "size_of_business": "",
-    }
+        "old_data" : ""
+        }
 if "input_data_set" not in st.session_state:
     st.session_state.input_data_set = False
 
@@ -67,13 +69,15 @@ else:
 
 # Collect input data
 if not st.session_state.input_data_set:
-    with st.form(key="input_form"):
+    with st.form(key="input_form",):
         st.session_state.input_data["industry"] = st.text_input("Enter the industry:")
-        st.session_state.input_data["products"] = st.text_input("Enter the products/services:")
-        st.session_state.input_data["location"] = st.text_input("Enter the location:")
         st.session_state.input_data["data"] = st.selectbox("Do you have the last 3 months of data?", ["No", "Yes"])
         if st.session_state.input_data["data"] == "Yes":
-            st.session_state.input_data["data"] = st.file_uploader("Upload the data:", type="csv,excel")
+            csv_path = st.file_uploader("Upload the data:", type="csv,excel")
+            st.session_state.input_data["old_data"] = get_sales_report(csv_path)
+        else:
+            st.session_state.input_data["products"] = st.text_input("Enter the products/services:")
+        st.session_state.input_data["location"] = st.text_input("Enter the location:")
         st.session_state.input_data["timeframe"] = st.text_input("Enter the timeframe:")
         st.session_state.input_data["type_of_business"] = st.selectbox("Enter the type of business:", ["Retail", "Manufacturing", "Wholesale", "Other"])
         st.session_state.input_data["size_of_business"] = st.selectbox("Enter the size of business:", ["Small", "Medium", "Large", "Extra Large"])
@@ -96,7 +100,13 @@ def generate_prompt(user_input):
             first_data = first_data+f"{key}: {value}\n"
         st.session_state.chat_history.append({"role": "user", "content": first_data})
     elif st.session_state.input_data["data"] == "Yes":
-        pass
+        prompt = get_prompt_with_old_data(st.session_state.input_data)
+        st.session_state.first_response = True
+        first_data = ""
+        for key, value in st.session_state.input_data.items():
+            if key != "old_data":
+                first_data = first_data+f"{key}: {value} \n\n"
+        st.session_state.chat_history.append({"role": "user", "content": first_data})
     else:
         prompt = get_prompt_update(st.session_state.input_data, user_input)
         st.session_state.chat_history.append({"role": "user", "content": user_input})
