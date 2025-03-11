@@ -90,15 +90,16 @@ if not st.session_state.input_data_set:
 def generate_prompt(user_input):
     if not st.session_state.first_response:
         prompt = get_prompt(st.session_state.input_data)
-        st.session_state.chat_history.append({"role": "user", "content": st.session_state.input_data})
-    else:
-        prompt = get_prompt_update(st.session_state.input_data, user_input)
-        st.session_state.chat_history.append({"role": "user", "content": user_input})
-
-    if st.session_state.input_data["data"] == "Yes":
+        st.session_state.first_response = True
+        first_data = ""
+        for key, value in st.session_state.input_data.items():
+            first_data = first_data+f"{key}: {value}\n"
+        st.session_state.chat_history.append({"role": "user", "content": first_data})
+    elif st.session_state.input_data["data"] == "Yes":
         pass
     else:
         prompt = get_prompt_update(st.session_state.input_data, user_input)
+        st.session_state.chat_history.append({"role": "user", "content": user_input})
 
     return ChatPromptTemplate.from_messages([
         ("system", "You are an expert-powered supply chain demand forecaster."),
