@@ -66,4 +66,8 @@ def get_prompt_update(context, user_input):
 
     Please modify only the following sections based on the new requirements:
     - {user_input}
+<<<<<<< Updated upstream
     """
+=======
+"""
+>>>>>>> Stashed changes
